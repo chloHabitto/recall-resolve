@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { User, Settings, HelpCircle, Trash2 } from 'lucide-react';
+import { User, Settings, HelpCircle, Trash2, Sun, Moon, Monitor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -13,8 +13,17 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
+import { useTheme } from 'next-themes';
+
+const THEME_OPTIONS = [
+  { value: 'system', label: 'Auto', icon: Monitor },
+  { value: 'dark', label: 'Dark', icon: Moon },
+  { value: 'light', label: 'Light', icon: Sun },
+] as const;
 
 export function AccountPage() {
+  const { theme, setTheme } = useTheme();
+
   const handleClearData = () => {
     localStorage.removeItem('worthit_entries');
     toast.success('All data cleared');
@@ -48,6 +57,34 @@ export function AccountPage() {
               <h2 className="font-medium">Local User</h2>
               <p className="text-sm text-muted-foreground">Data stored on device</p>
             </div>
+          </div>
+        </motion.div>
+
+        {/* Appearance Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="bg-card rounded-xl p-5 shadow-soft border border-border/50"
+        >
+          <h3 className="font-medium mb-3">Appearance</h3>
+          <div className="grid grid-cols-3 gap-2">
+            {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                onClick={() => setTheme(value)}
+                className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                  theme === value
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                }`}
+              >
+                <Icon className={`w-5 h-5 ${theme === value ? 'text-primary' : 'text-muted-foreground'}`} />
+                <span className={`text-sm font-medium ${theme === value ? 'text-primary' : ''}`}>
+                  {label}
+                </span>
+              </button>
+            ))}
           </div>
         </motion.div>
 
