@@ -1,5 +1,23 @@
 import { motion } from 'framer-motion';
-import { User, Trash2, Sun, Moon, Monitor, ChevronRight, Smartphone } from 'lucide-react';
+import { 
+  User, 
+  Trash2, 
+  Sun, 
+  Moon, 
+  Monitor, 
+  ChevronRight, 
+  Smartphone,
+  Download,
+  Shield,
+  HelpCircle,
+  Mail,
+  MessageSquare,
+  Star,
+  Share2,
+  FileText,
+  Scale,
+  ExternalLink
+} from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +49,83 @@ export function AccountPage() {
     window.location.reload();
   };
 
+  const handleExportData = () => {
+    const dataStr = JSON.stringify(entries, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `worthit-export-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success('Data exported successfully');
+  };
+
   const entryCount = entries.length;
+
+  const SettingsRow = ({ 
+    icon: Icon, 
+    label, 
+    sublabel, 
+    onClick,
+    external = false,
+    destructive = false 
+  }: { 
+    icon: React.ElementType; 
+    label: string; 
+    sublabel?: string;
+    onClick?: () => void;
+    external?: boolean;
+    destructive?: boolean;
+  }) => (
+    <button 
+      onClick={onClick}
+      className={`w-full p-4 flex items-center gap-3 transition-colors ${
+        destructive 
+          ? 'text-destructive hover:bg-destructive/5' 
+          : 'hover:bg-muted/50'
+      }`}
+    >
+      <Icon className="w-5 h-5" />
+      <div className="flex-1 text-left">
+        <span className="font-medium">{label}</span>
+        {sublabel && (
+          <p className={`text-xs ${destructive ? 'text-destructive/70' : 'text-muted-foreground'}`}>
+            {sublabel}
+          </p>
+        )}
+      </div>
+      {external ? (
+        <ExternalLink className="w-4 h-4 opacity-50" />
+      ) : (
+        <ChevronRight className="w-4 h-4 opacity-50" />
+      )}
+    </button>
+  );
+
+  const SectionCard = ({ 
+    title, 
+    children,
+    delay = 0 
+  }: { 
+    title: string; 
+    children: React.ReactNode;
+    delay?: number;
+  }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+      className="bg-card rounded-2xl shadow-soft border border-border/50 overflow-hidden"
+    >
+      <div className="px-5 py-3 bg-muted/30 border-b border-border/50">
+        <h3 className="font-semibold text-sm text-muted-foreground">{title}</h3>
+      </div>
+      <div className="divide-y divide-border/50">
+        {children}
+      </div>
+    </motion.div>
+  );
 
   return (
     <div className="flex flex-col min-h-screen pb-24">
@@ -73,7 +167,7 @@ export function AccountPage() {
           </div>
         </motion.div>
 
-        {/* Appearance Section */}
+        {/* Settings Section */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -105,26 +199,31 @@ export function AccountPage() {
           </div>
         </motion.div>
 
-        {/* Danger Zone */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-card rounded-2xl shadow-soft border border-border/50 overflow-hidden"
-        >
-          <div className="px-5 py-3 bg-muted/30 border-b border-border/50">
-            <h3 className="font-semibold text-sm text-muted-foreground">Data</h3>
-          </div>
+        {/* Data & Privacy Section */}
+        <SectionCard title="Data & Privacy" delay={0.1}>
+          <SettingsRow 
+            icon={Download} 
+            label="Export My Data" 
+            sublabel="Download all your memories as JSON"
+            onClick={handleExportData}
+          />
+          <SettingsRow 
+            icon={Shield} 
+            label="Privacy Policy" 
+            sublabel="How we handle your data"
+            onClick={() => toast.info('Privacy Policy coming soon')}
+            external
+          />
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <button className="w-full p-4 flex items-center gap-3 text-destructive hover:bg-destructive/5 transition-colors">
-                <Trash2 className="w-5 h-5" />
-                <div className="flex-1 text-left">
-                  <span className="font-medium">Clear all memories</span>
-                  <p className="text-xs text-destructive/70">Permanently delete all logged entries</p>
-                </div>
-                <ChevronRight className="w-4 h-4 opacity-50" />
-              </button>
+              <div>
+                <SettingsRow 
+                  icon={Trash2} 
+                  label="Clear All Memories" 
+                  sublabel="Permanently delete all logged entries"
+                  destructive
+                />
+              </div>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -144,13 +243,77 @@ export function AccountPage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        </motion.div>
+        </SectionCard>
+
+        {/* Support Section */}
+        <SectionCard title="Support" delay={0.15}>
+          <SettingsRow 
+            icon={HelpCircle} 
+            label="Help / FAQ" 
+            sublabel="Get answers to common questions"
+            onClick={() => toast.info('Help center coming soon')}
+          />
+          <SettingsRow 
+            icon={Mail} 
+            label="Contact Us" 
+            sublabel="Reach out to our team"
+            onClick={() => toast.info('Contact form coming soon')}
+          />
+          <SettingsRow 
+            icon={MessageSquare} 
+            label="Send Feedback" 
+            sublabel="Help us improve Worth It?"
+            onClick={() => toast.info('Feedback form coming soon')}
+          />
+        </SectionCard>
+
+        {/* About Section */}
+        <SectionCard title="About" delay={0.2}>
+          <SettingsRow 
+            icon={Star} 
+            label="Rate Worth It?" 
+            sublabel="Leave a review on the app store"
+            onClick={() => toast.info('Rating coming soon')}
+            external
+          />
+          <SettingsRow 
+            icon={Share2} 
+            label="Share with Friends" 
+            sublabel="Spread the word"
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: 'Worth It?',
+                  text: 'Before you do it again… remember how it felt last time.',
+                  url: window.location.origin,
+                });
+              } else {
+                navigator.clipboard.writeText(window.location.origin);
+                toast.success('Link copied to clipboard');
+              }
+            }}
+          />
+          <SettingsRow 
+            icon={FileText} 
+            label="Terms of Service" 
+            sublabel="Our terms and conditions"
+            onClick={() => toast.info('Terms of Service coming soon')}
+            external
+          />
+          <SettingsRow 
+            icon={Scale} 
+            label="Open Source Licenses" 
+            sublabel="Third-party software credits"
+            onClick={() => toast.info('Licenses page coming soon')}
+            external
+          />
+        </SectionCard>
 
         {/* Footer */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.15 }}
+          transition={{ delay: 0.25 }}
           className="pt-6 pb-4 text-center space-y-1"
         >
           <p className="text-sm font-medium text-muted-foreground">
