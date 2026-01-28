@@ -1,10 +1,24 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Trash2, Edit3 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Trash2, Pencil, Check, X } from 'lucide-react';
 import { useEntries } from '@/hooks/useEntries';
-import { PHYSICAL_RATINGS, WORTH_IT_OPTIONS, CATEGORIES } from '@/types/entry';
-import { format } from 'date-fns';
+import { 
+  PHYSICAL_RATINGS, 
+  WORTH_IT_OPTIONS, 
+  CATEGORIES, 
+  TIME_OF_DAY,
+  EMOTION_TAGS,
+  Entry,
+  PhysicalRating,
+  WorthIt,
+  Category,
+  TimeOfDay
+} from '@/types/entry';
+import { formatDistanceToNow, format } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,9 +35,50 @@ import { toast } from 'sonner';
 export function EntryDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { entries, deleteEntry } = useEntries();
+  const { entries, deleteEntry, updateEntry } = useEntries();
+  const [isEditing, setIsEditing] = useState(false);
   
   const entry = entries.find(e => e.id === id);
+
+  // Edit form state
+  const [editForm, setEditForm] = useState<{
+    action: string;
+    category: Category;
+    context: TimeOfDay[];
+    physicalRating: PhysicalRating;
+    emotionalTags: string[];
+    worthIt: WorthIt;
+    note: string;
+  } | null>(null);
+
+  const startEditing = () => {
+    if (entry) {
+      setEditForm({
+        action: entry.action,
+        category: entry.category,
+        context: [...entry.context],
+        physicalRating: entry.physicalRating,
+        emotionalTags: [...entry.emotionalTags],
+        worthIt: entry.worthIt,
+        note: entry.note,
+      });
+      setIsEditing(true);
+    }
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+    setEditForm(null);
+  };
+
+  const saveChanges = () => {
+    if (entry && editForm) {
+      updateEntry(entry.id, editForm);
+      toast.success('Memory updated');
+      setIsEditing(false);
+      setEditForm(null);
+    }
+  };
 
   if (!entry) {
     return (
@@ -50,6 +105,22 @@ export function EntryDetailPage() {
     navigate(-1);
   };
 
+  const toggleContext = (time: TimeOfDay) => {
+    if (!editForm) return;
+    const newContext = editForm.context.includes(time)
+      ? editForm.context.filter(t => t !== time)
+      : [...editForm.context, time];
+    setEditForm({ ...editForm, context: newContext });
+  };
+
+  const toggleEmotion = (tag: string) => {
+    if (!editForm) return;
+    const newTags = editForm.emotionalTags.includes(tag)
+      ? editForm.emotionalTags.filter(t => t !== tag)
+      : [...editForm.emotionalTags, tag];
+    setEditForm({ ...editForm, emotionalTags: newTags });
+  };
+
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
@@ -60,68 +131,128 @@ export function EntryDetailPage() {
           className="flex items-center gap-4"
         >
           <button 
-            onClick={() => navigate(-1)}
+            onClick={isEditing ? cancelEditing : () => navigate(-1)}
             className="p-2 -ml-2 rounded-full hover:bg-muted transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
+            {isEditing ? <X className="w-5 h-5" /> : <ArrowLeft className="w-5 h-5" />}
           </button>
-          <h1 className="text-xl font-serif font-medium flex-1">Memory details</h1>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <button className="p-2 rounded-full hover:bg-destructive/10 text-destructive transition-colors">
-                <Trash2 className="w-5 h-5" />
-              </button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete this memory?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This memory will be permanently deleted.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <h1 className="text-xl font-serif font-medium flex-1">
+            {isEditing ? 'Edit memory' : 'Memory details'}
+          </h1>
+          {isEditing ? (
+            <button 
+              onClick={saveChanges}
+              className="p-2 rounded-full hover:bg-secondary/80 text-primary transition-colors"
+            >
+              <Check className="w-5 h-5" />
+            </button>
+          ) : (
+            <button 
+              onClick={startEditing}
+              className="p-2 rounded-full hover:bg-muted transition-colors"
+            >
+              <Pencil className="w-5 h-5" />
+            </button>
+          )}
         </motion.div>
       </header>
 
       {/* Content */}
       <div className="px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
-        >
-          {/* Main Card */}
-          <div className="bg-card rounded-xl p-6 shadow-soft border border-border/50">
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                  <span>{category?.emoji} {category?.label}</span>
-                  <span>·</span>
-                  <span>{entry.context.join(' · ')}</span>
-                </div>
-                <h2 className="text-2xl font-serif font-medium">{entry.action}</h2>
-              </div>
-              <span className="text-4xl">{rating?.emoji}</span>
-            </div>
+        <AnimatePresence mode="wait">
+          {isEditing && editForm ? (
+            <EditMode 
+              key="edit"
+              editForm={editForm}
+              setEditForm={setEditForm}
+              toggleContext={toggleContext}
+              toggleEmotion={toggleEmotion}
+            />
+          ) : (
+            <ViewMode 
+              key="view"
+              entry={entry}
+              rating={rating}
+              worth={worth}
+              category={category}
+              worthColorClass={worthColorClass}
+              handleDelete={handleDelete}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
 
-            <div className="flex items-center gap-2 mb-4">
-              <span className={`text-sm font-medium px-3 py-1 rounded-full ${worthColorClass}`}>
-                {worth?.emoji} {entry.worthIt === 'yes' ? 'Worth it' : entry.worthIt === 'meh' ? 'Meh' : 'Not worth it'}
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {format(entry.createdAt, 'MMM d, yyyy · h:mm a')}
-              </span>
-            </div>
+// View Mode Component
+function ViewMode({ 
+  entry, 
+  rating, 
+  worth, 
+  category, 
+  worthColorClass,
+  handleDelete 
+}: {
+  entry: Entry;
+  rating: typeof PHYSICAL_RATINGS[0] | undefined;
+  worth: typeof WORTH_IT_OPTIONS[0] | undefined;
+  category: typeof CATEGORIES[0] | undefined;
+  worthColorClass: string;
+  handleDelete: () => void;
+}) {
+  const timeLabels = entry.context.map(c => 
+    TIME_OF_DAY.find(t => t.value === c)?.label
+  ).filter(Boolean).join(' · ');
 
-            {entry.emotionalTags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-4">
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="space-y-6"
+    >
+      {/* Main Hero Card */}
+      <div className="bg-card rounded-2xl p-6 shadow-soft border border-border/50 text-center">
+        {/* Large Emotional Anchor */}
+        <div className="text-6xl mb-4">{rating?.emoji}</div>
+        
+        {/* Action Title */}
+        <h2 className="text-2xl font-serif font-medium mb-2">{entry.action}</h2>
+        
+        {/* Category & Context */}
+        <p className="text-sm text-muted-foreground mb-4">
+          {category?.emoji} {category?.label} · {timeLabels}
+        </p>
+        
+        {/* Time ago */}
+        <p className="text-xs text-muted-foreground mb-4">
+          {formatDistanceToNow(entry.createdAt, { addSuffix: true })}
+        </p>
+        
+        {/* Worth It Badge */}
+        <div className="inline-block">
+          <span className={`text-lg font-medium px-5 py-2 rounded-full ${worthColorClass}`}>
+            {worth?.emoji} {entry.worthIt === 'yes' ? 'Worth It' : entry.worthIt === 'meh' ? 'Meh' : 'Not Worth It'}
+          </span>
+        </div>
+      </div>
+
+      {/* How It Felt Section */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-muted-foreground text-center">
+          ─────── How It Felt ───────
+        </h3>
+        <div className="bg-card rounded-xl p-4 shadow-soft border border-border/50">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-2xl">{rating?.emoji}</span>
+            <span className="text-sm">Physical: {rating?.label}</span>
+          </div>
+          
+          {entry.emotionalTags.length > 0 && (
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">Emotions:</p>
+              <div className="flex flex-wrap gap-2">
                 {entry.emotionalTags.map(tag => (
                   <span 
                     key={tag}
@@ -131,17 +262,208 @@ export function EntryDetailPage() {
                   </span>
                 ))}
               </div>
-            )}
-
-            {entry.note && (
-              <div className="bg-muted/50 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">Note to future you:</p>
-                <p className="italic">"{entry.note}"</p>
-              </div>
-            )}
-          </div>
-        </motion.div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Note Section */}
+      {entry.note && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-medium text-muted-foreground text-center">
+            ─────── Your Note ───────
+          </h3>
+          <div className="bg-card rounded-xl p-4 shadow-soft border border-border/50">
+            <p className="italic text-foreground">"{entry.note}"</p>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Button */}
+      <div className="pt-4 text-center">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button className="inline-flex items-center gap-2 text-destructive hover:text-destructive/80 transition-colors text-sm">
+              <Trash2 className="w-4 h-4" />
+              Delete this memory
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this memory?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This memory will be permanently deleted.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </motion.div>
+  );
+}
+
+// Edit Mode Component
+function EditMode({ 
+  editForm, 
+  setEditForm,
+  toggleContext,
+  toggleEmotion
+}: {
+  editForm: {
+    action: string;
+    category: Category;
+    context: TimeOfDay[];
+    physicalRating: PhysicalRating;
+    emotionalTags: string[];
+    worthIt: WorthIt;
+    note: string;
+  };
+  setEditForm: (form: typeof editForm) => void;
+  toggleContext: (time: TimeOfDay) => void;
+  toggleEmotion: (tag: string) => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="space-y-6"
+    >
+      {/* What did you do? */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium">What did you do?</label>
+        <Input
+          value={editForm.action}
+          onChange={(e) => setEditForm({ ...editForm, action: e.target.value })}
+          placeholder="e.g., Late-night snack"
+          className="bg-card"
+        />
+      </div>
+
+      {/* Category */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Category</label>
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat.value}
+              onClick={() => setEditForm({ ...editForm, category: cat.value })}
+              className={`px-4 py-2 rounded-full text-sm transition-all ${
+                editForm.category === cat.value
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
+            >
+              {cat.emoji} {cat.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* When was this? */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium">When was this?</label>
+        <div className="flex flex-wrap gap-2">
+          {TIME_OF_DAY.map((time) => (
+            <button
+              key={time.value}
+              onClick={() => toggleContext(time.value)}
+              className={`px-4 py-2 rounded-full text-sm transition-all ${
+                editForm.context.includes(time.value)
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
+            >
+              {time.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Physical Rating */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium">How did it feel physically?</label>
+        <div className="grid grid-cols-4 gap-2">
+          {PHYSICAL_RATINGS.map((r) => (
+            <button
+              key={r.value}
+              onClick={() => setEditForm({ ...editForm, physicalRating: r.value })}
+              className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all ${
+                editForm.physicalRating === r.value
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
+            >
+              <span className="text-2xl">{r.emoji}</span>
+              <span className="text-xs">{r.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Emotions */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Emotions (select all that apply)</label>
+        <div className="flex flex-wrap gap-2">
+          {EMOTION_TAGS.map((tag) => (
+            <button
+              key={tag}
+              onClick={() => toggleEmotion(tag)}
+              className={`px-3 py-1.5 rounded-full text-sm capitalize transition-all ${
+                editForm.emotionalTags.includes(tag)
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Worth It */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Was it worth it?</label>
+        <div className="grid grid-cols-3 gap-2">
+          {WORTH_IT_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => setEditForm({ ...editForm, worthIt: option.value })}
+              className={`flex items-center justify-center gap-2 p-3 rounded-xl transition-all ${
+                editForm.worthIt === option.value
+                  ? option.value === 'yes' 
+                    ? 'bg-secondary text-secondary-foreground'
+                    : option.value === 'no'
+                    ? 'bg-destructive/20 text-destructive'
+                    : 'bg-accent/30 text-accent-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
+            >
+              <span>{option.emoji}</span>
+              <span className="text-sm">{option.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Note */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Note (optional)</label>
+        <Textarea
+          value={editForm.note}
+          onChange={(e) => setEditForm({ ...editForm, note: e.target.value.slice(0, 200) })}
+          placeholder="A note to your future self..."
+          className="bg-card min-h-[100px]"
+          maxLength={200}
+        />
+        <p className="text-xs text-muted-foreground text-right">{editForm.note.length}/200</p>
+      </div>
+    </motion.div>
   );
 }
