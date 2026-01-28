@@ -16,9 +16,9 @@ import { useTheme } from 'next-themes';
 import { useEntries } from '@/hooks/useEntries';
 
 const THEME_OPTIONS = [
-  { value: 'system', label: 'Auto', icon: Monitor, description: 'Match device' },
-  { value: 'light', label: 'Light', icon: Sun, description: 'Always light' },
-  { value: 'dark', label: 'Dark', icon: Moon, description: 'Always dark' },
+  { value: 'system', label: 'Auto', icon: Monitor },
+  { value: 'light', label: 'Light', icon: Sun },
+  { value: 'dark', label: 'Dark', icon: Moon },
 ] as const;
 
 export function AccountPage() {
@@ -82,7 +82,7 @@ export function AccountPage() {
         >
           <h3 className="font-semibold mb-4">Appearance</h3>
           <div className="grid grid-cols-3 gap-3">
-            {THEME_OPTIONS.map(({ value, label, icon: Icon, description }) => (
+            {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
               <button
                 key={value}
                 onClick={() => setTheme(value)}
@@ -97,14 +97,9 @@ export function AccountPage() {
                 }`}>
                   <Icon className={`w-5 h-5 ${theme === value ? 'text-primary' : 'text-muted-foreground'}`} />
                 </div>
-                <div className="text-center">
-                  <span className={`text-sm font-medium block ${theme === value ? 'text-primary' : ''}`}>
-                    {label}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">
-                    {description}
-                  </span>
-                </div>
+                <span className={`text-sm font-medium ${theme === value ? 'text-primary' : ''}`}>
+                  {label}
+                </span>
               </button>
             ))}
           </div>
