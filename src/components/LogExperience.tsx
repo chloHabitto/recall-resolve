@@ -100,8 +100,8 @@ export function LogExperience({ onSave, onClose }: LogExperienceProps) {
           </button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Content - extra padding to prevent focus ring clipping */}
+        <div className="flex-1 overflow-y-auto overflow-x-visible px-1 -mx-1">
           <AnimatePresence mode="wait">
             {step === 1 && (
               <motion.div
@@ -209,7 +209,7 @@ export function LogExperience({ onSave, onClose }: LogExperienceProps) {
                   <p className="text-muted-foreground">Be honest with yourself.</p>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 p-1 -m-1">
                   {PHYSICAL_RATINGS.map(r => (
                     <button
                       key={r.value}
@@ -260,7 +260,7 @@ export function LogExperience({ onSave, onClose }: LogExperienceProps) {
                   <p className="text-muted-foreground">Would you do it again?</p>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-3 p-1 -m-1">
                   {WORTH_IT_OPTIONS.map(w => {
                     const colorClass = {
                       yes: worthIt === w.value ? 'bg-secondary text-secondary-foreground border-secondary' : '',
