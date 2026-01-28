@@ -9,6 +9,7 @@ import { HomePage } from "./pages/HomePage";
 import { SearchPage } from "./pages/SearchPage";
 import { LibraryPage } from "./pages/LibraryPage";
 import { EntryDetailPage } from "./pages/EntryDetailPage";
+import { AccountPage } from "./pages/AccountPage";
 import { BottomNav } from "./components/BottomNav";
 import { LogExperience } from "./components/LogExperience";
 import { useEntries } from "./hooks/useEntries";
@@ -32,6 +33,7 @@ function AppContent() {
         <Route path="/search" element={<SearchPage />} />
         <Route path="/library" element={<LibraryPage onLogClick={() => setShowLogModal(true)} />} />
         <Route path="/entry/:id" element={<EntryDetailPage />} />
+        <Route path="/account" element={<AccountPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       
