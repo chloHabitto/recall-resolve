@@ -16,6 +16,7 @@ import {
   WORTH_IT_OPTIONS,
   EMOTION_TAGS,
 } from '@/types/entry';
+import { EntryType, ENTRY_TYPES, Behavior } from '@/types/behavior';
 
 interface LogExperienceProps {
   onSave: (entry: Omit<Entry, 'id' | 'createdAt'>) => void;
@@ -41,6 +42,8 @@ export function LogExperience({ onSave, onClose }: LogExperienceProps) {
   const [emotionalTags, setEmotionalTags] = useState<string[]>([]);
   const [worthIt, setWorthIt] = useState<WorthIt>('meh');
   const [note, setNote] = useState('');
+  const [entryType, setEntryType] = useState<EntryType>('did-it');
+  const [behaviorId, setBehaviorId] = useState<string | undefined>(undefined);
 
   const canProceed = step === 1 ? action.length > 0 : true;
 
@@ -56,6 +59,8 @@ export function LogExperience({ onSave, onClose }: LogExperienceProps) {
         emotionalTags,
         worthIt,
         note,
+        entryType,
+        behaviorId,
       });
     }
   };
@@ -111,15 +116,41 @@ export function LogExperience({ onSave, onClose }: LogExperienceProps) {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-6"
               >
+                {/* Entry Type Selection */}
                 <div>
-                  <h2 className="text-2xl font-serif font-medium mb-2">What did you do?</h2>
-                  <p className="text-muted-foreground">Be specific so future you can remember.</p>
+                  <h2 className="text-2xl font-serif font-medium mb-2">What happened?</h2>
+                  <p className="text-muted-foreground">Tell us about this moment.</p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  {ENTRY_TYPES.map(t => (
+                    <button
+                      key={t.value}
+                      onClick={() => setEntryType(t.value)}
+                      className={`p-3 rounded-lg border text-center transition-all ${
+                        entryType === t.value 
+                          ? t.value === 'resisted'
+                            ? 'bg-secondary text-secondary-foreground border-secondary scale-105'
+                            : 'bg-primary text-primary-foreground border-primary scale-105'
+                          : 'bg-card border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <span className="text-lg block mb-0.5">{t.emoji}</span>
+                      <span className="text-xs font-medium">{t.label}</span>
+                    </button>
+                  ))}
                 </div>
                 
                 <Input
                   value={action}
                   onChange={(e) => setAction(e.target.value)}
-                  placeholder="e.g., ate spicy ramen at midnight"
+                  placeholder={
+                    entryType === 'resisted' 
+                      ? "e.g., late-night snack (but I didn't!)"
+                      : entryType === 'reflection'
+                      ? "e.g., thinking about my sleep habits"
+                      : "e.g., ate spicy ramen at midnight"
+                  }
                   className="text-lg py-6"
                   autoFocus
                 />

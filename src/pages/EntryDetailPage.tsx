@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Trash2, Pencil, Check, X } from 'lucide-react';
+import { ArrowLeft, Trash2, Pencil, Check, X, GitBranch, ChevronRight } from 'lucide-react';
 import { useEntries } from '@/hooks/useEntries';
+import { useBehaviors } from '@/hooks/useBehaviors';
 import { 
   PHYSICAL_RATINGS, 
   WORTH_IT_OPTIONS, 
@@ -15,6 +16,7 @@ import {
   Category,
   TimeOfDay
 } from '@/types/entry';
+import { ENTRY_TYPES, Behavior } from '@/types/behavior';
 import { formatDistanceToNow, format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,9 +38,16 @@ export function EntryDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { entries, deleteEntry, updateEntry } = useEntries();
+  const { behaviors, getBehaviorStats, getEntriesForBehavior } = useBehaviors(entries);
   const [isEditing, setIsEditing] = useState(false);
   
   const entry = entries.find(e => e.id === id);
+  
+  // Get linked behavior if any
+  const linkedBehavior = entry?.behaviorId 
+    ? behaviors.find(b => b.id === entry.behaviorId)
+    : undefined;
+  const behaviorStats = linkedBehavior ? getBehaviorStats(linkedBehavior.id) : undefined;
 
   // Edit form state
   const [editForm, setEditForm] = useState<{
@@ -177,6 +186,8 @@ export function EntryDetailPage() {
               category={category}
               worthColorClass={worthColorClass}
               handleDelete={handleDelete}
+              linkedBehavior={linkedBehavior}
+              behaviorStats={behaviorStats}
             />
           )}
         </AnimatePresence>
@@ -192,7 +203,9 @@ function ViewMode({
   worth, 
   category, 
   worthColorClass,
-  handleDelete 
+  handleDelete,
+  linkedBehavior,
+  behaviorStats
 }: {
   entry: Entry;
   rating: typeof PHYSICAL_RATINGS[0] | undefined;
@@ -200,7 +213,12 @@ function ViewMode({
   category: typeof CATEGORIES[0] | undefined;
   worthColorClass: string;
   handleDelete: () => void;
+  linkedBehavior?: Behavior;
+  behaviorStats?: import('@/types/behavior').BehaviorStats;
 }) {
+  const navigate = useNavigate();
+  const entryTypeInfo = ENTRY_TYPES.find(t => t.value === entry.entryType) || ENTRY_TYPES[0];
+  
   const timeLabels = entry.context.map(c => 
     TIME_OF_DAY.find(t => t.value === c)?.label
   ).filter(Boolean).join(' · ');
@@ -212,10 +230,26 @@ function ViewMode({
       exit={{ opacity: 0, y: -20 }}
       className="space-y-6"
     >
+      {/* Entry Type Badge */}
+      {entry.entryType && entry.entryType !== 'did-it' && (
+        <div className="text-center">
+          <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
+            entry.entryType === 'resisted' 
+              ? 'bg-secondary/20 text-secondary-foreground'
+              : 'bg-muted text-muted-foreground'
+          }`}>
+            <span>{entryTypeInfo.emoji}</span>
+            {entry.entryType === 'resisted' ? '💪 Resisted!' : 'Reflection'}
+          </span>
+        </div>
+      )}
+
       {/* Main Hero Card */}
       <div className="bg-card rounded-2xl p-6 shadow-soft border border-border/50 text-center">
         {/* Large Emotional Anchor */}
-        <div className="text-6xl mb-4">{rating?.emoji}</div>
+        <div className="text-6xl mb-4">
+          {entry.entryType === 'resisted' ? '💪' : rating?.emoji}
+        </div>
         
         {/* Action Title */}
         <h2 className="text-2xl font-serif font-medium mb-2">{entry.action}</h2>
@@ -230,13 +264,36 @@ function ViewMode({
           {formatDistanceToNow(entry.createdAt, { addSuffix: true })}
         </p>
         
-        {/* Worth It Badge */}
-        <div className="inline-block">
-          <span className={`text-lg font-medium px-5 py-2 rounded-full ${worthColorClass}`}>
-            {worth?.emoji} {entry.worthIt === 'yes' ? 'Worth It' : entry.worthIt === 'meh' ? 'Meh' : 'Not Worth It'}
-          </span>
-        </div>
+        {/* Worth It Badge (only for did-it entries) */}
+        {entry.entryType !== 'resisted' && (
+          <div className="inline-block">
+            <span className={`text-lg font-medium px-5 py-2 rounded-full ${worthColorClass}`}>
+              {worth?.emoji} {entry.worthIt === 'yes' ? 'Worth It' : entry.worthIt === 'meh' ? 'Meh' : 'Not Worth It'}
+            </span>
+          </div>
+        )}
       </div>
+
+      {/* Behavior Thread Link */}
+      {linkedBehavior && behaviorStats && (
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          onClick={() => navigate(`/behavior/${linkedBehavior.id}`)}
+          className="w-full bg-card rounded-xl p-4 shadow-soft border border-border/50 flex items-center gap-3 hover:bg-muted/50 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <GitBranch className="w-5 h-5 text-primary" />
+          </div>
+          <div className="flex-1 text-left">
+            <p className="font-medium text-sm">{linkedBehavior.name}</p>
+            <p className="text-xs text-muted-foreground">
+              {behaviorStats.totalEntries} entries · {behaviorStats.successRate}% success rate
+            </p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+        </motion.button>
+      )}
 
       {/* How It Felt Section */}
       <div className="space-y-3">

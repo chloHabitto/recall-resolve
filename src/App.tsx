@@ -10,6 +10,7 @@ import { HomePage } from "./pages/HomePage";
 import { SearchPage } from "./pages/SearchPage";
 import { LibraryPage } from "./pages/LibraryPage";
 import { EntryDetailPage } from "./pages/EntryDetailPage";
+import { BehaviorDetailPage } from "./pages/BehaviorDetailPage";
 import { AccountPage } from "./pages/AccountPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { HelpPage } from "./pages/HelpPage";
@@ -36,6 +37,7 @@ function AppContent() {
         <Route path="/search" element={<SearchPage />} />
         <Route path="/library" element={<LibraryPage onLogClick={() => setShowLogModal(true)} />} />
         <Route path="/entry/:id" element={<EntryDetailPage />} />
+        <Route path="/behavior/:id" element={<BehaviorDetailPage />} />
         <Route path="/account" element={<AccountPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/help" element={<HelpPage />} />
