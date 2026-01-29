@@ -298,6 +298,13 @@ function ViewMode({
             </div>
           )}
         </div>
+
+        {/* Note - integrated */}
+        {entry.note && (
+          <div className="border-t border-border/50 pt-4 mt-2">
+            <p className="text-sm italic text-muted-foreground">"{entry.note}"</p>
+          </div>
+        )}
       </div>
 
       {/* Timeline Section */}
@@ -353,19 +360,6 @@ function ViewMode({
             />
           </div>
         </motion.div>
-      )}
-
-
-      {/* Note Section */}
-      {entry.note && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium text-muted-foreground text-center">
-            ─────── Your Note ───────
-          </h3>
-          <div className="bg-card rounded-xl p-4 shadow-soft border border-border/50">
-            <p className="italic text-foreground">"{entry.note}"</p>
-          </div>
-        </div>
       )}
 
       {/* Delete Button */}
