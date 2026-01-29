@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -40,11 +41,20 @@ const THEME_OPTIONS = [
   { value: 'dark', label: 'Dark', icon: Moon },
 ] as const;
 
+const DISPLAY_NAME_KEY = 'worthit_display_name';
+
 export function AccountPage() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { entries } = useEntries();
+  const [displayName, setDisplayName] = useState('');
 
+  useEffect(() => {
+    const stored = localStorage.getItem(DISPLAY_NAME_KEY);
+    if (stored) {
+      setDisplayName(stored);
+    }
+  }, []);
   const handleClearData = () => {
     localStorage.removeItem('worthit_entries');
     toast.success('All data cleared');
@@ -143,23 +153,25 @@ export function AccountPage() {
 
       {/* Content */}
       <div className="px-6 space-y-5">
-        {/* Profile Card */}
-        <motion.div
+        {/* Profile Card - Tappable */}
+        <motion.button
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-card rounded-2xl p-5 shadow-soft border border-border/50"
+          onClick={() => navigate('/profile')}
+          className="w-full bg-card rounded-2xl p-5 shadow-soft border border-border/50 text-left hover:bg-muted/30 transition-colors"
         >
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
               <User className="w-8 h-8 text-primary" />
             </div>
             <div className="flex-1">
-              <h2 className="font-semibold text-lg">Local User</h2>
+              <h2 className="font-semibold text-lg">{displayName || 'Local User'}</h2>
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <Smartphone className="w-3.5 h-3.5" />
                 <span>Data stored on this device</span>
               </div>
             </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </div>
           <div className="mt-4 pt-4 border-t border-border/50">
             <div className="flex justify-between items-center">
@@ -167,7 +179,7 @@ export function AccountPage() {
               <span className="font-semibold text-primary">{entryCount}</span>
             </div>
           </div>
-        </motion.div>
+        </motion.button>
 
         {/* Settings Section */}
         <motion.div
