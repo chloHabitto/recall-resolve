@@ -41,24 +41,18 @@ export function AddMemoSheet({ open, onOpenChange, onAddMemo, actionName }: AddM
     setTimeout(resetForm, 300);
   };
 
-  const handleOutcomeSelect = (selected: MemoOutcome) => {
-    setOutcome(selected);
-    setStep('feeling');
+  const handleNext = () => {
+    if (step === 'outcome' && outcome) setStep('feeling');
+    else if (step === 'feeling' && feeling) setStep('note');
   };
 
-  const handleFeelingSelect = (selected: PhysicalRating) => {
-    setFeeling(selected);
-    setStep('note');
-  };
-
-  const handleSubmit = () => {
-    if (outcome && feeling) {
-      onAddMemo({
-        outcome,
-        feeling,
-        note: note.trim(),
-      });
-      handleClose();
+  const handleSkip = () => {
+    if (step === 'outcome') {
+      setOutcome('reflecting');
+      setStep('feeling');
+    } else if (step === 'feeling') {
+      setFeeling('meh');
+      setStep('note');
     }
   };
 
@@ -66,6 +60,58 @@ export function AddMemoSheet({ open, onOpenChange, onAddMemo, actionName }: AddM
     if (step === 'feeling') setStep('outcome');
     else if (step === 'note') setStep('feeling');
   };
+
+  const handleSubmit = () => {
+    const finalOutcome = outcome || 'reflecting';
+    const finalFeeling = feeling || 'meh';
+    onAddMemo({
+      outcome: finalOutcome,
+      feeling: finalFeeling,
+      note: note.trim(),
+    });
+    handleClose();
+  };
+
+  const canProceed = () => {
+    if (step === 'outcome') return !!outcome;
+    if (step === 'feeling') return !!feeling;
+    return true;
+  };
+
+  const NavigationButtons = ({ showSkip = true }: { showSkip?: boolean }) => (
+    <div className="flex gap-3 mt-6">
+      <Button
+        variant="ghost"
+        onClick={handleBack}
+        className="flex-1"
+        disabled={step === 'outcome'}
+      >
+        Back
+      </Button>
+      {showSkip && step !== 'note' && (
+        <Button
+          variant="outline"
+          onClick={handleSkip}
+          className="flex-1"
+        >
+          Skip
+        </Button>
+      )}
+      {step === 'note' ? (
+        <Button onClick={handleSubmit} className="flex-1">
+          Save
+        </Button>
+      ) : (
+        <Button
+          onClick={handleNext}
+          className="flex-1"
+          disabled={!canProceed()}
+        >
+          Next
+        </Button>
+      )}
+    </div>
+  );
 
   return (
     <Sheet open={open} onOpenChange={handleClose}>
@@ -93,7 +139,7 @@ export function AddMemoSheet({ open, onOpenChange, onAddMemo, actionName }: AddM
               {MEMO_OUTCOMES.map((opt) => (
                 <button
                   key={opt.value}
-                  onClick={() => handleOutcomeSelect(opt.value)}
+                  onClick={() => setOutcome(opt.value)}
                   className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all ${
                     outcome === opt.value
                       ? 'border-primary bg-primary/5'
@@ -104,6 +150,7 @@ export function AddMemoSheet({ open, onOpenChange, onAddMemo, actionName }: AddM
                   <span className="font-medium">{opt.label}</span>
                 </button>
               ))}
+              <NavigationButtons />
             </motion.div>
           )}
 
@@ -119,7 +166,7 @@ export function AddMemoSheet({ open, onOpenChange, onAddMemo, actionName }: AddM
                 {PHYSICAL_RATINGS.map((r) => (
                   <button
                     key={r.value}
-                    onClick={() => handleFeelingSelect(r.value)}
+                    onClick={() => setFeeling(r.value)}
                     className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all ${
                       feeling === r.value
                         ? 'bg-primary text-primary-foreground scale-105'
@@ -131,12 +178,7 @@ export function AddMemoSheet({ open, onOpenChange, onAddMemo, actionName }: AddM
                   </button>
                 ))}
               </div>
-              <button
-                onClick={handleBack}
-                className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                ← Back
-              </button>
+              <NavigationButtons />
             </motion.div>
           )}
 
@@ -150,10 +192,10 @@ export function AddMemoSheet({ open, onOpenChange, onAddMemo, actionName }: AddM
             >
               <div className="flex items-center justify-center gap-3 py-2">
                 <span className="text-xl">
-                  {MEMO_OUTCOMES.find(o => o.value === outcome)?.emoji}
+                  {MEMO_OUTCOMES.find(o => o.value === outcome)?.emoji || '💭'}
                 </span>
                 <span className="text-xl">
-                  {PHYSICAL_RATINGS.find(r => r.value === feeling)?.emoji}
+                  {PHYSICAL_RATINGS.find(r => r.value === feeling)?.emoji || '😕'}
                 </span>
               </div>
               
@@ -166,21 +208,7 @@ export function AddMemoSheet({ open, onOpenChange, onAddMemo, actionName }: AddM
               />
               <p className="text-xs text-muted-foreground text-right">{note.length}/150</p>
 
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={handleBack}
-                  className="flex-1"
-                >
-                  Back
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  className="flex-1"
-                >
-                  Add Memo
-                </Button>
-              </div>
+              <NavigationButtons showSkip={false} />
             </motion.div>
           )}
         </AnimatePresence>
