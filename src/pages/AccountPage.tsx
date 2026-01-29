@@ -18,7 +18,8 @@ import {
   Share2,
   FileText,
   Scale,
-  ExternalLink
+  ExternalLink,
+  Lock
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -34,6 +35,7 @@ import {
 import { toast } from 'sonner';
 import { useTheme } from 'next-themes';
 import { useEntries } from '@/hooks/useEntries';
+import { useAppLock } from '@/hooks/useAppLock';
 
 const THEME_OPTIONS = [
   { value: 'system', label: 'Auto', icon: Monitor },
@@ -47,6 +49,7 @@ export function AccountPage() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { entries } = useEntries();
+  const { settings: lockSettings } = useAppLock();
   const [displayName, setDisplayName] = useState('');
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
@@ -228,6 +231,12 @@ export function AccountPage() {
 
         {/* Data & Privacy Section */}
         <SectionCard title="Data & Privacy" delay={0.1}>
+          <SettingsRow 
+            icon={Lock} 
+            label="App Lock" 
+            sublabel={lockSettings.isEnabled ? 'PIN protection enabled' : 'Protect your app with PIN or Face ID'}
+            onClick={() => navigate('/app-lock')}
+          />
           <SettingsRow 
             icon={Download} 
             label="Export My Data" 
