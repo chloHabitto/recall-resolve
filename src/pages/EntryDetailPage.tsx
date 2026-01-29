@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Trash2, Pencil, Check, X, GitBranch, Plus } from 'lucide-react';
+import { ArrowLeft, Trash2, Pencil, Check, X, GitBranch, Plus, Eye, EyeOff } from 'lucide-react';
 import { useEntries } from '@/hooks/useEntries';
 import { useBehaviors } from '@/hooks/useBehaviors';
 import { ThreadTimeline } from '@/components/ThreadTimeline';
 import { AddMemoSheet } from '@/components/AddMemoSheet';
+import { EditMemoSheet } from '@/components/EditMemoSheet';
+import { MemoCard } from '@/components/MemoCard';
 import { 
   PHYSICAL_RATINGS, 
   WORTH_IT_OPTIONS, 
@@ -41,10 +43,13 @@ import { toast } from 'sonner';
 export function EntryDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { entries, deleteEntry, updateEntry, addMemo } = useEntries();
+  const { entries, deleteEntry, updateEntry, addMemo, updateMemo, deleteMemo } = useEntries();
   const { behaviors, getBehaviorStats, getEntriesForBehavior } = useBehaviors(entries);
   const [isEditing, setIsEditing] = useState(false);
   const [memoSheetOpen, setMemoSheetOpen] = useState(false);
+  const [editMemoSheetOpen, setEditMemoSheetOpen] = useState(false);
+  const [editingMemo, setEditingMemo] = useState<Memo | null>(null);
+  const [showHiddenMemos, setShowHiddenMemos] = useState(false);
   
   const entry = entries.find(e => e.id === id);
   
@@ -125,6 +130,34 @@ export function EntryDetailPage() {
     toast.success('Memo added!');
   };
 
+  const handleEditMemo = (memo: Memo) => {
+    setEditingMemo(memo);
+    setEditMemoSheetOpen(true);
+  };
+
+  const handleSaveMemoEdit = (updates: Partial<Memo>) => {
+    if (editingMemo) {
+      updateMemo(entry.id, editingMemo.id, updates);
+      toast.success('Memo updated!');
+      setEditingMemo(null);
+    }
+  };
+
+  const handleDeleteMemo = (memoId: string) => {
+    deleteMemo(entry.id, memoId);
+    toast.success('Memo deleted');
+  };
+
+  const handleToggleMemoStar = (memoId: string, isStarred: boolean) => {
+    updateMemo(entry.id, memoId, { isStarred: !isStarred });
+    toast.success(isStarred ? 'Unstarred' : 'Starred!');
+  };
+
+  const handleToggleMemoHide = (memoId: string, isHidden: boolean) => {
+    updateMemo(entry.id, memoId, { isHidden: !isHidden });
+    toast.success(isHidden ? 'Memo visible' : 'Memo hidden');
+  };
+
   const toggleContext = (time: TimeOfDay) => {
     if (!editForm) return;
     const newContext = editForm.context.includes(time)
@@ -201,6 +234,12 @@ export function EntryDetailPage() {
               behaviorStats={behaviorStats}
               behaviorEntries={behaviorEntries}
               onAddMemo={() => setMemoSheetOpen(true)}
+              onEditMemo={handleEditMemo}
+              onDeleteMemo={handleDeleteMemo}
+              onToggleMemoStar={handleToggleMemoStar}
+              onToggleMemoHide={handleToggleMemoHide}
+              showHiddenMemos={showHiddenMemos}
+              onToggleShowHidden={() => setShowHiddenMemos(!showHiddenMemos)}
             />
           )}
         </AnimatePresence>
@@ -212,6 +251,14 @@ export function EntryDetailPage() {
         onOpenChange={setMemoSheetOpen}
         onAddMemo={handleAddMemo}
         actionName={entry.action}
+      />
+
+      {/* Edit Memo Sheet */}
+      <EditMemoSheet
+        open={editMemoSheetOpen}
+        onOpenChange={setEditMemoSheetOpen}
+        memo={editingMemo}
+        onSave={handleSaveMemoEdit}
       />
     </div>
   );
@@ -228,7 +275,13 @@ function ViewMode({
   linkedBehavior,
   behaviorStats,
   behaviorEntries,
-  onAddMemo
+  onAddMemo,
+  onEditMemo,
+  onDeleteMemo,
+  onToggleMemoStar,
+  onToggleMemoHide,
+  showHiddenMemos,
+  onToggleShowHidden
 }: {
   entry: Entry;
   rating: typeof PHYSICAL_RATINGS[0] | undefined;
@@ -240,6 +293,12 @@ function ViewMode({
   behaviorStats?: import('@/types/behavior').BehaviorStats;
   behaviorEntries: Entry[];
   onAddMemo: () => void;
+  onEditMemo: (memo: Memo) => void;
+  onDeleteMemo: (memoId: string) => void;
+  onToggleMemoStar: (memoId: string, isStarred: boolean) => void;
+  onToggleMemoHide: (memoId: string, isHidden: boolean) => void;
+  showHiddenMemos: boolean;
+  onToggleShowHidden: () => void;
 }) {
   const navigate = useNavigate();
   const entryTypeInfo = ENTRY_TYPES.find(t => t.value === entry.entryType) || ENTRY_TYPES[0];
@@ -342,31 +401,38 @@ function ViewMode({
         {/* Memos List */}
         {entry.memos && entry.memos.length > 0 ? (
           <div className="space-y-2">
-            {entry.memos.map((memo, index) => {
-              const outcomeInfo = MEMO_OUTCOMES.find(o => o.value === memo.outcome);
-              const feelingInfo = PHYSICAL_RATINGS.find(r => r.value === memo.feeling);
-              return (
-                <motion.div
-                  key={memo.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="bg-card rounded-xl p-4 shadow-soft border border-border/50"
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-lg">{outcomeInfo?.emoji}</span>
-                    <span className="text-sm font-medium">{outcomeInfo?.label}</span>
-                    <span className="text-lg">{feelingInfo?.emoji}</span>
-                    <span className="text-xs text-muted-foreground ml-auto">
-                      {formatDistanceToNow(new Date(memo.createdAt), { addSuffix: true })}
-                    </span>
-                  </div>
-                  {memo.note && (
-                    <p className="text-sm italic text-muted-foreground">"{memo.note}"</p>
-                  )}
-                </motion.div>
-              );
-            })}
+            {/* Show/hide hidden memos toggle */}
+            {entry.memos.some(m => m.isHidden) && (
+              <button
+                onClick={onToggleShowHidden}
+                className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors mx-auto"
+              >
+                {showHiddenMemos ? (
+                  <>
+                    <EyeOff className="w-3 h-3" />
+                    Hide hidden memos
+                  </>
+                ) : (
+                  <>
+                    <Eye className="w-3 h-3" />
+                    Show {entry.memos.filter(m => m.isHidden).length} hidden
+                  </>
+                )}
+              </button>
+            )}
+            
+            {entry.memos.map((memo, index) => (
+              <MemoCard
+                key={memo.id}
+                memo={memo}
+                index={index}
+                onEdit={() => onEditMemo(memo)}
+                onDelete={() => onDeleteMemo(memo.id)}
+                onToggleStar={() => onToggleMemoStar(memo.id, !!memo.isStarred)}
+                onToggleHide={() => onToggleMemoHide(memo.id, !!memo.isHidden)}
+                showHidden={showHiddenMemos}
+              />
+            ))}
             
             {/* Add another memo button */}
             <Button 

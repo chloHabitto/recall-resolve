@@ -12,6 +12,8 @@ export interface Memo {
   feeling: PhysicalRating;
   note: string;
   createdAt: Date;
+  isStarred?: boolean;
+  isHidden?: boolean;
 }
 
 export interface Entry {
