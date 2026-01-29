@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Entry, PHYSICAL_RATINGS, WORTH_IT_OPTIONS, CATEGORIES } from '@/types/entry';
+import { ENTRY_TYPES } from '@/types/behavior';
 import { formatDistanceToNow } from 'date-fns';
 
 interface EntryCardProps {
@@ -12,12 +13,15 @@ export function EntryCard({ entry, onClick, compact = false }: EntryCardProps) {
   const rating = PHYSICAL_RATINGS.find(r => r.value === entry.physicalRating);
   const worth = WORTH_IT_OPTIONS.find(w => w.value === entry.worthIt);
   const category = CATEGORIES.find(c => c.value === entry.category);
+  const entryType = ENTRY_TYPES.find(t => t.value === entry.entryType);
 
   const worthColorClass = {
     yes: 'bg-secondary text-secondary-foreground',
     meh: 'bg-accent/20 text-accent-foreground',
     no: 'bg-destructive/10 text-destructive',
   }[entry.worthIt];
+
+  const isResisted = entry.entryType === 'resisted';
 
   return (
     <motion.div
@@ -55,10 +59,16 @@ export function EntryCard({ entry, onClick, compact = false }: EntryCardProps) {
         </div>
 
         <div className="flex flex-col items-end gap-1.5 shrink-0">
-          <span className="text-2xl">{rating?.emoji}</span>
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${worthColorClass}`}>
-            {worth?.emoji} {worth?.label}
-          </span>
+          <span className="text-2xl">{isResisted ? '💪' : rating?.emoji}</span>
+          {isResisted ? (
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-secondary/20 text-secondary-foreground">
+              Resisted!
+            </span>
+          ) : (
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${worthColorClass}`}>
+              {worth?.emoji} {worth?.label}
+            </span>
+          )}
         </div>
       </div>
 

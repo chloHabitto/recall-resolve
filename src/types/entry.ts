@@ -1,3 +1,5 @@
+import { EntryType } from './behavior';
+
 export type PhysicalRating = 'fine' | 'meh' | 'bad' | 'awful';
 export type WorthIt = 'yes' | 'meh' | 'no';
 export type Category = 'food' | 'sleep' | 'habit' | 'social' | 'other';
@@ -13,6 +15,9 @@ export interface Entry {
   worthIt: WorthIt;
   note: string;
   createdAt: Date;
+  // New fields for Behavior Threads
+  behaviorId?: string;
+  entryType: EntryType;
 }
 
 export const PHYSICAL_RATINGS: { value: PhysicalRating; emoji: string; label: string }[] = [

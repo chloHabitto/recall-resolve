@@ -15,6 +15,8 @@ export function useEntries() {
         setEntries(parsed.map((e: any) => ({
           ...e,
           createdAt: new Date(e.createdAt),
+          // Default entryType for existing entries without it
+          entryType: e.entryType || 'did-it',
         })));
       } catch {
         setEntries([]);
