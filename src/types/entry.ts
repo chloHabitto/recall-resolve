@@ -4,6 +4,15 @@ export type PhysicalRating = 'fine' | 'meh' | 'bad' | 'awful';
 export type WorthIt = 'yes' | 'meh' | 'no';
 export type Category = 'food' | 'sleep' | 'habit' | 'social' | 'other';
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'late-night';
+export type MemoOutcome = 'did-again' | 'resisted' | 'reflecting';
+
+export interface Memo {
+  id: string;
+  outcome: MemoOutcome;
+  feeling: PhysicalRating;
+  note: string;
+  createdAt: Date;
+}
 
 export interface Entry {
   id: string;
@@ -18,7 +27,15 @@ export interface Entry {
   // New fields for Behavior Threads
   behaviorId?: string;
   entryType: EntryType;
+  // Memos for follow-up tracking
+  memos?: Memo[];
 }
+
+export const MEMO_OUTCOMES: { value: MemoOutcome; emoji: string; label: string }[] = [
+  { value: 'did-again', emoji: '🔄', label: 'Did it again' },
+  { value: 'resisted', emoji: '💪', label: 'Resisted' },
+  { value: 'reflecting', emoji: '💭', label: 'Still thinking' },
+];
 
 export const PHYSICAL_RATINGS: { value: PhysicalRating; emoji: string; label: string }[] = [
   { value: 'fine', emoji: '😌', label: 'Fine' },

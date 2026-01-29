@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Entry } from '@/types/entry';
+import { Entry, Memo } from '@/types/entry';
 
 const STORAGE_KEY = 'worthit_entries';
 
@@ -17,6 +17,11 @@ export function useEntries() {
           createdAt: new Date(e.createdAt),
           // Default entryType for existing entries without it
           entryType: e.entryType || 'did-it',
+          // Parse memo dates if they exist
+          memos: e.memos?.map((m: any) => ({
+            ...m,
+            createdAt: new Date(m.createdAt),
+          })) || [],
         })));
       } catch {
         setEntries([]);
@@ -35,6 +40,7 @@ export function useEntries() {
       ...entry,
       id: crypto.randomUUID(),
       createdAt: new Date(),
+      memos: [],
     };
     const newEntries = [newEntry, ...entries];
     saveEntries(newEntries);
@@ -51,6 +57,25 @@ export function useEntries() {
   const deleteEntry = useCallback((id: string) => {
     const newEntries = entries.filter(e => e.id !== id);
     saveEntries(newEntries);
+  }, [entries, saveEntries]);
+
+  const addMemo = useCallback((entryId: string, memo: Omit<Memo, 'id' | 'createdAt'>) => {
+    const newMemo: Memo = {
+      ...memo,
+      id: crypto.randomUUID(),
+      createdAt: new Date(),
+    };
+    const newEntries = entries.map(e => {
+      if (e.id === entryId) {
+        return {
+          ...e,
+          memos: [...(e.memos || []), newMemo],
+        };
+      }
+      return e;
+    });
+    saveEntries(newEntries);
+    return newMemo;
   }, [entries, saveEntries]);
 
   const searchEntries = useCallback((query: string) => {
@@ -73,6 +98,7 @@ export function useEntries() {
     addEntry,
     updateEntry,
     deleteEntry,
+    addMemo,
     searchEntries,
     getRecentEntries,
   };
