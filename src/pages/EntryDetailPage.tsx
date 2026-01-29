@@ -271,12 +271,33 @@ function ViewMode({
         
         {/* Worth It Badge (only for did-it entries) */}
         {entry.entryType !== 'resisted' && (
-          <div className="inline-block">
+          <div className="inline-block mb-4">
             <span className={`text-lg font-medium px-5 py-2 rounded-full ${worthColorClass}`}>
               {worth?.emoji} {entry.worthIt === 'yes' ? 'Worth It' : entry.worthIt === 'meh' ? 'Meh' : 'Not Worth It'}
             </span>
           </div>
         )}
+
+        {/* How It Felt - integrated */}
+        <div className="border-t border-border/50 pt-4 mt-2">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <span className="text-xl">{rating?.emoji}</span>
+            <span className="text-sm text-muted-foreground">Felt {rating?.label?.toLowerCase()}</span>
+          </div>
+          
+          {entry.emotionalTags.length > 0 && (
+            <div className="flex flex-wrap gap-2 justify-center">
+              {entry.emotionalTags.map(tag => (
+                <span 
+                  key={tag}
+                  className="text-sm bg-muted text-muted-foreground px-3 py-1 rounded-full capitalize"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Timeline Section */}
@@ -334,34 +355,6 @@ function ViewMode({
         </motion.div>
       )}
 
-      {/* How It Felt Section */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-medium text-muted-foreground text-center">
-          ─────── How It Felt ───────
-        </h3>
-        <div className="bg-card rounded-xl p-4 shadow-soft border border-border/50">
-          <div className="flex items-center gap-3 mb-3">
-            <span className="text-2xl">{rating?.emoji}</span>
-            <span className="text-sm">Physical: {rating?.label}</span>
-          </div>
-          
-          {entry.emotionalTags.length > 0 && (
-            <div>
-              <p className="text-xs text-muted-foreground mb-2">Emotions:</p>
-              <div className="flex flex-wrap gap-2">
-                {entry.emotionalTags.map(tag => (
-                  <span 
-                    key={tag}
-                    className="text-sm bg-muted text-muted-foreground px-3 py-1 rounded-full capitalize"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
 
       {/* Note Section */}
       {entry.note && (
