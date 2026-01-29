@@ -10,23 +10,29 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { QuickHelpSheet } from '@/components/QuickHelpSheet';
 import { toast } from 'sonner';
 
-const QUICK_HELP = [
+type HelpTopic = 'getting-started' | 'logging' | 'ratings';
+
+const QUICK_HELP: { icon: typeof Sparkles; title: string; description: string; topic: HelpTopic }[] = [
   {
     icon: Sparkles,
     title: 'Getting Started',
     description: 'Learn the basics of Worth It? and how to log your first memory.',
+    topic: 'getting-started' as HelpTopic,
   },
   {
     icon: BookOpen,
     title: 'How Logging Works',
     description: 'Capture experiences with emotions, categories, and personal notes.',
+    topic: 'logging' as HelpTopic,
   },
   {
     icon: ThumbsUp,
     title: 'Understanding Ratings',
     description: 'What "Worth It", "Meh", and "Not Worth It" mean for your decisions.',
+    topic: 'ratings' as HelpTopic,
   },
 ];
 
@@ -100,6 +106,7 @@ const FAQ_SECTIONS = [
 export function HelpPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTopic, setSelectedTopic] = useState<HelpTopic | null>(null);
 
   const filteredSections = useMemo(() => {
     if (!searchQuery.trim()) return FAQ_SECTIONS;
@@ -165,13 +172,14 @@ export function HelpPage() {
               Quick Help
             </h2>
             <div className="grid gap-3">
-              {QUICK_HELP.map(({ icon: Icon, title, description }, index) => (
-                <motion.div
+              {QUICK_HELP.map(({ icon: Icon, title, description, topic }, index) => (
+                <motion.button
                   key={title}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15 + index * 0.05 }}
-                  className="bg-card rounded-xl p-4 shadow-soft border border-border/50 flex items-start gap-4"
+                  onClick={() => setSelectedTopic(topic)}
+                  className="bg-card rounded-xl p-4 shadow-soft border border-border/50 flex items-start gap-4 text-left hover:bg-muted/30 transition-colors w-full"
                 >
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                     <Icon className="w-5 h-5 text-primary" />
@@ -180,7 +188,7 @@ export function HelpPage() {
                     <h3 className="font-medium mb-1">{title}</h3>
                     <p className="text-sm text-muted-foreground">{description}</p>
                   </div>
-                </motion.div>
+                </motion.button>
               ))}
             </div>
           </motion.div>
@@ -265,6 +273,9 @@ export function HelpPage() {
         {/* Bottom spacing */}
         <div className="h-4" />
       </div>
+
+      {/* Quick Help Sheet */}
+      <QuickHelpSheet topic={selectedTopic} onClose={() => setSelectedTopic(null)} />
     </div>
   );
 }
