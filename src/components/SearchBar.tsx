@@ -32,7 +32,7 @@ export function SearchBar({ value, onChange, placeholder = 'How did I feel after
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={() => onChange('')}
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-muted"
+            className="absolute right-4 top-0 bottom-0 flex items-center justify-center p-1 rounded-full hover:bg-muted my-auto h-fit"
           >
             <X className="w-4 h-4 text-muted-foreground" />
           </motion.button>
