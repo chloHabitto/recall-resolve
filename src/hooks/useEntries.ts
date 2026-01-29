@@ -78,6 +78,34 @@ export function useEntries() {
     return newMemo;
   }, [entries, saveEntries]);
 
+  const updateMemo = useCallback((entryId: string, memoId: string, updates: Partial<Memo>) => {
+    const newEntries = entries.map(e => {
+      if (e.id === entryId) {
+        return {
+          ...e,
+          memos: (e.memos || []).map(m => 
+            m.id === memoId ? { ...m, ...updates } : m
+          ),
+        };
+      }
+      return e;
+    });
+    saveEntries(newEntries);
+  }, [entries, saveEntries]);
+
+  const deleteMemo = useCallback((entryId: string, memoId: string) => {
+    const newEntries = entries.map(e => {
+      if (e.id === entryId) {
+        return {
+          ...e,
+          memos: (e.memos || []).filter(m => m.id !== memoId),
+        };
+      }
+      return e;
+    });
+    saveEntries(newEntries);
+  }, [entries, saveEntries]);
+
   const searchEntries = useCallback((query: string) => {
     const q = query.toLowerCase();
     return entries.filter(e => 
@@ -99,6 +127,8 @@ export function useEntries() {
     updateEntry,
     deleteEntry,
     addMemo,
+    updateMemo,
+    deleteMemo,
     searchEntries,
     getRecentEntries,
   };
