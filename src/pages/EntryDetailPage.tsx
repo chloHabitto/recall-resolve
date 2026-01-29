@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Trash2, Pencil, Check, X, GitBranch } from 'lucide-react';
+import { ArrowLeft, Trash2, Pencil, Check, X, GitBranch, Plus } from 'lucide-react';
 import { useEntries } from '@/hooks/useEntries';
 import { useBehaviors } from '@/hooks/useBehaviors';
 import { ThreadTimeline } from '@/components/ThreadTimeline';
+import { AddMemoSheet } from '@/components/AddMemoSheet';
 import { 
   PHYSICAL_RATINGS, 
   WORTH_IT_OPTIONS, 
   CATEGORIES, 
   TIME_OF_DAY,
   EMOTION_TAGS,
+  MEMO_OUTCOMES,
   Entry,
+  Memo,
   PhysicalRating,
   WorthIt,
   Category,
@@ -38,9 +41,10 @@ import { toast } from 'sonner';
 export function EntryDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { entries, deleteEntry, updateEntry } = useEntries();
+  const { entries, deleteEntry, updateEntry, addMemo } = useEntries();
   const { behaviors, getBehaviorStats, getEntriesForBehavior } = useBehaviors(entries);
   const [isEditing, setIsEditing] = useState(false);
+  const [memoSheetOpen, setMemoSheetOpen] = useState(false);
   
   const entry = entries.find(e => e.id === id);
   
@@ -114,6 +118,11 @@ export function EntryDetailPage() {
     deleteEntry(entry.id);
     toast.success('Memory deleted');
     navigate(-1);
+  };
+
+  const handleAddMemo = (memo: Omit<Memo, 'id' | 'createdAt'>) => {
+    addMemo(entry.id, memo);
+    toast.success('Memo added!');
   };
 
   const toggleContext = (time: TimeOfDay) => {
@@ -191,10 +200,19 @@ export function EntryDetailPage() {
               linkedBehavior={linkedBehavior}
               behaviorStats={behaviorStats}
               behaviorEntries={behaviorEntries}
+              onAddMemo={() => setMemoSheetOpen(true)}
             />
           )}
         </AnimatePresence>
       </div>
+
+      {/* Add Memo Sheet */}
+      <AddMemoSheet
+        open={memoSheetOpen}
+        onOpenChange={setMemoSheetOpen}
+        onAddMemo={handleAddMemo}
+        actionName={entry.action}
+      />
     </div>
   );
 }
@@ -209,7 +227,8 @@ function ViewMode({
   handleDelete,
   linkedBehavior,
   behaviorStats,
-  behaviorEntries
+  behaviorEntries,
+  onAddMemo
 }: {
   entry: Entry;
   rating: typeof PHYSICAL_RATINGS[0] | undefined;
@@ -220,6 +239,7 @@ function ViewMode({
   linkedBehavior?: Behavior;
   behaviorStats?: import('@/types/behavior').BehaviorStats;
   behaviorEntries: Entry[];
+  onAddMemo: () => void;
 }) {
   const navigate = useNavigate();
   const entryTypeInfo = ENTRY_TYPES.find(t => t.value === entry.entryType) || ENTRY_TYPES[0];
@@ -319,17 +339,58 @@ function ViewMode({
           <span className="text-sm font-medium text-primary">This is the original memory</span>
         </div>
         
-        {/* Empty State / Future Memos */}
-        <div className="bg-card rounded-xl p-6 shadow-soft border border-border/50 text-center">
-          <p className="text-muted-foreground mb-1">No follow-up memos yet</p>
-          <p className="text-sm text-muted-foreground mb-4">
-            Track what happens next time you face this decision.
-          </p>
-          <Button variant="outline" className="gap-2">
-            <span className="text-lg">+</span>
-            Add a memo
-          </Button>
-        </div>
+        {/* Memos List */}
+        {entry.memos && entry.memos.length > 0 ? (
+          <div className="space-y-2">
+            {entry.memos.map((memo, index) => {
+              const outcomeInfo = MEMO_OUTCOMES.find(o => o.value === memo.outcome);
+              const feelingInfo = PHYSICAL_RATINGS.find(r => r.value === memo.feeling);
+              return (
+                <motion.div
+                  key={memo.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="bg-card rounded-xl p-4 shadow-soft border border-border/50"
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-lg">{outcomeInfo?.emoji}</span>
+                    <span className="text-sm font-medium">{outcomeInfo?.label}</span>
+                    <span className="text-lg">{feelingInfo?.emoji}</span>
+                    <span className="text-xs text-muted-foreground ml-auto">
+                      {formatDistanceToNow(new Date(memo.createdAt), { addSuffix: true })}
+                    </span>
+                  </div>
+                  {memo.note && (
+                    <p className="text-sm italic text-muted-foreground">"{memo.note}"</p>
+                  )}
+                </motion.div>
+              );
+            })}
+            
+            {/* Add another memo button */}
+            <Button 
+              variant="outline" 
+              className="w-full gap-2"
+              onClick={onAddMemo}
+            >
+              <Plus className="w-4 h-4" />
+              Add another memo
+            </Button>
+          </div>
+        ) : (
+          /* Empty State */
+          <div className="bg-card rounded-xl p-6 shadow-soft border border-border/50 text-center">
+            <p className="text-muted-foreground mb-1">No follow-up memos yet</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Track what happens next time you face this decision.
+            </p>
+            <Button variant="outline" className="gap-2" onClick={onAddMemo}>
+              <Plus className="w-4 h-4" />
+              Add a memo
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Behavior Thread Timeline */}
