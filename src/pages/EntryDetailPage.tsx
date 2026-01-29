@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Trash2, Pencil, Check, X, GitBranch, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Trash2, Pencil, Check, X, GitBranch } from 'lucide-react';
 import { useEntries } from '@/hooks/useEntries';
 import { useBehaviors } from '@/hooks/useBehaviors';
+import { ThreadTimeline } from '@/components/ThreadTimeline';
 import { 
   PHYSICAL_RATINGS, 
   WORTH_IT_OPTIONS, 
@@ -48,6 +49,7 @@ export function EntryDetailPage() {
     ? behaviors.find(b => b.id === entry.behaviorId)
     : undefined;
   const behaviorStats = linkedBehavior ? getBehaviorStats(linkedBehavior.id) : undefined;
+  const behaviorEntries = linkedBehavior ? getEntriesForBehavior(linkedBehavior.id) : [];
 
   // Edit form state
   const [editForm, setEditForm] = useState<{
@@ -188,6 +190,7 @@ export function EntryDetailPage() {
               handleDelete={handleDelete}
               linkedBehavior={linkedBehavior}
               behaviorStats={behaviorStats}
+              behaviorEntries={behaviorEntries}
             />
           )}
         </AnimatePresence>
@@ -205,7 +208,8 @@ function ViewMode({
   worthColorClass,
   handleDelete,
   linkedBehavior,
-  behaviorStats
+  behaviorStats,
+  behaviorEntries
 }: {
   entry: Entry;
   rating: typeof PHYSICAL_RATINGS[0] | undefined;
@@ -215,6 +219,7 @@ function ViewMode({
   handleDelete: () => void;
   linkedBehavior?: Behavior;
   behaviorStats?: import('@/types/behavior').BehaviorStats;
+  behaviorEntries: Entry[];
 }) {
   const navigate = useNavigate();
   const entryTypeInfo = ENTRY_TYPES.find(t => t.value === entry.entryType) || ENTRY_TYPES[0];
@@ -274,25 +279,34 @@ function ViewMode({
         )}
       </div>
 
-      {/* Behavior Thread Link */}
-      {linkedBehavior && behaviorStats && (
-        <motion.button
+      {/* Behavior Thread Timeline */}
+      {linkedBehavior && behaviorStats && behaviorEntries.length > 0 && (
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          onClick={() => navigate(`/behavior/${linkedBehavior.id}`)}
-          className="w-full bg-card rounded-xl p-4 shadow-soft border border-border/50 flex items-center gap-3 hover:bg-muted/50 transition-colors"
+          className="space-y-3"
         >
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <GitBranch className="w-5 h-5 text-primary" />
+          <div className="flex items-center gap-2 justify-center">
+            <GitBranch className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-medium text-muted-foreground">
+              ─────── {linkedBehavior.name} ───────
+            </h3>
           </div>
-          <div className="flex-1 text-left">
-            <p className="font-medium text-sm">{linkedBehavior.name}</p>
-            <p className="text-xs text-muted-foreground">
-              {behaviorStats.totalEntries} entries · {behaviorStats.successRate}% success rate
-            </p>
+          <div className="bg-card rounded-xl p-4 shadow-soft border border-border/50">
+            <div className="flex items-center justify-between mb-3 pb-3 border-b border-border/50">
+              <span className="text-sm text-muted-foreground">
+                {behaviorStats.totalEntries} entries
+              </span>
+              <span className="text-sm font-medium text-secondary">
+                {behaviorStats.successRate}% success rate
+              </span>
+            </div>
+            <ThreadTimeline 
+              entries={behaviorEntries} 
+              behaviorName={linkedBehavior.name}
+            />
           </div>
-          <ChevronRight className="w-5 h-5 text-muted-foreground" />
-        </motion.button>
+        </motion.div>
       )}
 
       {/* How It Felt Section */}
