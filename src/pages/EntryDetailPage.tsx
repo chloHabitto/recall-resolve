@@ -392,14 +392,18 @@ function ViewMode({
           ─────── Timeline ───────
         </h3>
         
-        {/* Original Memory Anchor */}
-        <div className="bg-primary/10 rounded-xl p-3 flex items-center gap-3">
-          <span className="text-lg">📍</span>
-          <span className="text-sm font-medium text-primary">This is the original memory</span>
-        </div>
+        {/* Add memo button - always on top */}
+        <Button 
+          variant="outline" 
+          className="w-full gap-2"
+          onClick={onAddMemo}
+        >
+          <Plus className="w-4 h-4" />
+          Add a memo
+        </Button>
         
         {/* Memos List */}
-        {entry.memos && entry.memos.length > 0 ? (
+        {entry.memos && entry.memos.length > 0 && (
           <div className="space-y-2">
             {/* Show/hide hidden memos toggle */}
             {entry.memos.some(m => m.isHidden) && (
@@ -433,28 +437,6 @@ function ViewMode({
                 showHidden={showHiddenMemos}
               />
             ))}
-            
-            {/* Add another memo button */}
-            <Button 
-              variant="outline" 
-              className="w-full gap-2"
-              onClick={onAddMemo}
-            >
-              <Plus className="w-4 h-4" />
-              Add another memo
-            </Button>
-          </div>
-        ) : (
-          /* Empty State */
-          <div className="bg-card rounded-xl p-6 shadow-soft border border-border/50 text-center">
-            <p className="text-muted-foreground mb-1">No follow-up memos yet</p>
-            <p className="text-sm text-muted-foreground mb-4">
-              Track what happens next time you face this decision.
-            </p>
-            <Button variant="outline" className="gap-2" onClick={onAddMemo}>
-              <Plus className="w-4 h-4" />
-              Add a memo
-            </Button>
           </div>
         )}
       </div>
@@ -489,31 +471,6 @@ function ViewMode({
         </motion.div>
       )}
 
-      {/* Delete Button */}
-      <div className="pt-4 text-center">
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <button className="inline-flex items-center gap-2 text-destructive hover:text-destructive/80 transition-colors text-sm">
-              <Trash2 className="w-4 h-4" />
-              Delete this memory
-            </button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete this memory?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This memory will be permanently deleted.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
     </motion.div>
   );
 }
