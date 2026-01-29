@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   User, 
@@ -40,6 +41,7 @@ const THEME_OPTIONS = [
 ] as const;
 
 export function AccountPage() {
+  const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { entries } = useEntries();
 
@@ -251,7 +253,7 @@ export function AccountPage() {
             icon={HelpCircle} 
             label="Help / FAQ" 
             sublabel="Get answers to common questions"
-            onClick={() => toast.info('Help center coming soon')}
+            onClick={() => navigate('/help')}
           />
           <SettingsRow 
             icon={Mail} 
