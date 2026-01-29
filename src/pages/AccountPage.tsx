@@ -42,17 +42,22 @@ const THEME_OPTIONS = [
 ] as const;
 
 const DISPLAY_NAME_KEY = 'worthit_display_name';
-
+const PROFILE_IMAGE_KEY = 'worthit_profile_image';
 export function AccountPage() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { entries } = useEntries();
   const [displayName, setDisplayName] = useState('');
+  const [profileImage, setProfileImage] = useState<string | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem(DISPLAY_NAME_KEY);
-    if (stored) {
-      setDisplayName(stored);
+    const storedName = localStorage.getItem(DISPLAY_NAME_KEY);
+    if (storedName) {
+      setDisplayName(storedName);
+    }
+    const storedImage = localStorage.getItem(PROFILE_IMAGE_KEY);
+    if (storedImage) {
+      setProfileImage(storedImage);
     }
   }, []);
   const handleClearData = () => {
@@ -161,9 +166,17 @@ export function AccountPage() {
           className="w-full bg-card rounded-2xl p-5 shadow-soft border border-border/50 text-left hover:bg-muted/30 transition-colors"
         >
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-              <User className="w-8 h-8 text-primary" />
-            </div>
+            {profileImage ? (
+              <img 
+                src={profileImage} 
+                alt="Profile" 
+                className="w-16 h-16 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                <User className="w-8 h-8 text-primary" />
+              </div>
+            )}
             <div className="flex-1">
               <h2 className="font-semibold text-lg">{displayName || 'Local User'}</h2>
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
