@@ -279,6 +279,31 @@ function ViewMode({
         )}
       </div>
 
+      {/* Timeline Section */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-muted-foreground text-center">
+          ─────── Timeline ───────
+        </h3>
+        
+        {/* Original Memory Anchor */}
+        <div className="bg-primary/10 rounded-xl p-3 flex items-center gap-3">
+          <span className="text-lg">📍</span>
+          <span className="text-sm font-medium text-primary">This is the original memory</span>
+        </div>
+        
+        {/* Empty State / Future Memos */}
+        <div className="bg-card rounded-xl p-6 shadow-soft border border-border/50 text-center">
+          <p className="text-muted-foreground mb-1">No follow-up memos yet</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            Track what happens next time you face this decision.
+          </p>
+          <Button variant="outline" className="gap-2">
+            <span className="text-lg">+</span>
+            Add a memo
+          </Button>
+        </div>
+      </div>
+
       {/* Behavior Thread Timeline */}
       {linkedBehavior && behaviorStats && behaviorEntries.length > 0 && (
         <motion.div
